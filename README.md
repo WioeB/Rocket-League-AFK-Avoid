@@ -1,6 +1,6 @@
 # Rocket League AFK Avoid
 
-Script for Windows that drives your Rocket League car forward a little every few seconds so the game doesn't count you as idle. **It keeps working while you're in another window** (a browser, Discord…).
+Script for Windows that drives your Rocket League car forward a little every few seconds so the game doesn't count you as idle. **It keeps working while you're in another window** (a browser, Discord…) and **doesn't take control away from your real controller** when you come back to play.
 
 When it's on, it accelerates for 1 second every 5 seconds.
 
@@ -10,7 +10,7 @@ When it's on, it accelerates for 1 second every 5 seconds.
 
 - Windows 10/11
 - [Python 3](https://www.python.org/downloads/)
-- Recommended: [`vgamepad`](https://pypi.org/project/vgamepad/) for the virtual controller method (installs the ViGEmBus driver; accept the installer when it appears):
+- Recommended: [`vgamepad`](https://pypi.org/project/vgamepad/) (installs the ViGEmBus driver; accept the installer when it appears):
   ```bash
   py -m pip install vgamepad
   ```
@@ -25,40 +25,40 @@ When it's on, it accelerates for 1 second every 5 seconds.
    ```bash
    py rl_mover.py
    ```
-3. Leave the console open. You can now go to any other window.
-4. Use the hotkeys (they work from any window):
+3. Press **F8** to turn it on, then go to any other window.
+4. When you come back to Rocket League, the script **pauses itself** and removes its virtual controller, so your own controller is back in charge. Press **F8** again before you leave next time.
 
-| Key  | Action          |
-|------|-----------------|
-| `F8` | Turn on / pause |
-| `F9` | Quit            |
+| Key  | Action                                |
+|------|---------------------------------------|
+| `F8` | Turn on / pause (from any window)     |
+| `F9` | Quit (from any window)                |
 
-## Methods
+## How it accelerates
 
-Set `METODO` at the top of `rl_mover.py`:
+| Rocket League is…  | Method | Notes |
+|--------------------|--------|-------|
+| In the background  | Virtual Xbox 360 controller, right trigger (RT) | XInput reaches the game whether or not it has focus. If `vgamepad` isn't installed, it posts `WM_KEYDOWN`/`WM_KEYUP` for W straight to the game window instead. |
+| In front           | Simulated W key (`SendInput`, scan code) | No virtual controller is created. |
 
-| Value      | How it accelerates | Works in background | Needs |
-|------------|--------------------|---------------------|-------|
-| `"mando"`  | Creates a virtual Xbox 360 controller and holds the right trigger (RT). XInput reaches the game whether or not it has focus. | Yes (most reliable) | `vgamepad` |
-| `"teclas"` | Posts `WM_KEYDOWN`/`WM_KEYUP` for W straight to the Rocket League window, without bringing it to the front. | Depends on the game | Nothing |
-| `"auto"` (default) | Uses `"mando"` if `vgamepad` is installed, otherwise `"teclas"`. | | |
+### Not interfering with your controller
 
-The console prints which method is active when the script starts.
+Rocket League can treat a newly plugged virtual controller as the main one, and then your real controller stops working. To avoid that:
+
+- The virtual controller only exists **while the script is active and the game is in the background**.
+- It's **unplugged** when you pause (F8), quit (F9), close the console, or bring Rocket League to the front.
+- With `PAUSAR_AL_VOLVER = True` (the default), switching back to the game from another window also pauses the script, because it assumes you're back to play.
+
+If your controller still doesn't respond after the virtual one is removed, unplug and reconnect it, or restart Rocket League.
 
 ## Settings
 
+At the top of `rl_mover.py`:
+
 ```python
-INTERVALO = 5.0      # seconds between movements
-DURACION = 1.0       # seconds accelerating
-METODO = "auto"      # "auto", "mando" or "teclas"
+INTERVALO = 5.0          # seconds between movements
+DURACION = 1.0           # seconds accelerating
+PAUSAR_AL_VOLVER = True  # pause by itself when you switch back to the game
 ```
-
-## How it works
-
-1. It polls F8/F9 with `GetAsyncKeyState`, so the hotkeys work whichever window you're in.
-2. Every `INTERVALO` seconds it looks for the `rocketleague.exe` window with `EnumWindows`. If the game isn't open, it skips that movement.
-3. It accelerates for `DURACION` seconds with the chosen method, then releases.
-4. It uses only `ctypes` from the standard library, plus `vgamepad` for the controller method.
 
 ## Files
 
@@ -75,7 +75,10 @@ Using automation to dodge AFK detection in online matches may break Psyonix/Epic
 
 ## Español
 
-Script para Windows que mueve tu coche de Rocket League un poco hacia adelante cada pocos segundos, para que el juego no te cuente como inactivo. **Sigue funcionando aunque estés en otra ventana** (Twitter, Discord…).
+Script para Windows que mueve tu coche de Rocket League un poco hacia adelante cada pocos segundos, para que el juego no te cuente como inactivo.
+
+- **Funciona aunque estés en otra ventana** (Twitter, Discord…).
+- **No le quita el control a tu mando real** cuando vuelves a jugar.
 
 ### Instalación
 
@@ -83,21 +86,18 @@ Script para Windows que mueve tu coche de Rocket League un poco hacia adelante c
 py -m pip install vgamepad
 ```
 
-Esto instala el mando virtual, el método más fiable. Acepta el instalador de ViGEmBus cuando aparezca. Sin `vgamepad`, el script manda la tecla W directamente a la ventana del juego, pero puede que el juego lo ignore si no está delante.
-
 ### Uso
 
 1. Haz doble clic en `iniciar_rl_mover.bat`.
-2. Pulsa **F8** para activarlo o pausarlo y **F9** para salir. Funcionan desde cualquier ventana.
-3. Ya puedes irte a otra ventana.
+2. Pulsa **F8** para activarlo y vete a otra ventana.
+3. Cuando vuelves a Rocket League, el script **se pausa solo** y desconecta su mando virtual, así que tu mando vuelve a funcionar. Antes de irte otra vez, pulsa **F8**.
+4. **F9** lo cierra.
 
-### Configuración
+### Cómo evita interferir con tu mando
 
-Al principio de `rl_mover.py`:
-
-- `INTERVALO`: segundos entre movimientos.
-- `DURACION`: segundos acelerando.
-- `METODO`: `"auto"`, `"mando"` o `"teclas"`.
+- El mando virtual solo existe mientras el script está activo y el juego está en segundo plano.
+- Se desconecta en cuanto pausas, sales, cierras la consola o pones el juego delante.
+- Si aun así tu mando no responde, desconéctalo y vuelve a conectarlo, o reinicia Rocket League.
 
 ### Aviso
 
